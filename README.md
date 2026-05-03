@@ -1,4 +1,4 @@
-# NetScan Pro
+# NetScan Pro (mint-netscan-pro)
 
 A high-performance, cross-platform network scanner built with Tauri and Nmap. An alternative to the Fing agent.
 
@@ -12,7 +12,7 @@ A high-performance, cross-platform network scanner built with Tauri and Nmap. An
 
 ### Linux
 1. Install Nmap: `sudo apt install nmap`
-2. Download the `.deb` or `AppImage` from the [Releases](https://github.com/YOUR_USERNAME/YOUR_REPO/releases) page.
+2. Download the `.deb` or `AppImage` from the [Releases](https://github.com/mintpro004/mint-netscan-pro/releases) page.
 3. Install the `.deb`: `sudo dpkg -i netscan-pro.deb`
 
 ### Windows
