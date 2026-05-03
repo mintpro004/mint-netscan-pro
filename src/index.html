@@ -88,7 +88,31 @@ body{font-family:var(--font-sans);background:transparent}
 
 <h2 class="sr-only">Fing-style network scanner app with device discovery, port scanning, vulnerability detection, and network monitoring</h2>
 
+<style>
+/* ... existing styles ... */
+.setup-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
+.setup-card{background:var(--color-background-primary);border-radius:var(--border-radius-lg);padding:32px;max-width:480px;width:100%;text-align:center;border:1px solid var(--color-border-secondary)}
+.setup-title{font-size:24px;font-weight:600;margin-bottom:12px;color:var(--color-text-primary)}
+.setup-desc{font-size:14px;color:var(--color-text-secondary);margin-bottom:24px;line-height:1.5}
+.dep-item{display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);margin-bottom:8px;text-align:left}
+.dep-name{font-size:14px;font-weight:500}
+.dep-status{font-size:12px;padding:2px 8px;border-radius:10px}
+</style>
+
+<div class="setup-overlay" id="setup-overlay">
+  <div class="setup-card">
+    <div class="setup-title">Setup Assistant</div>
+    <div class="setup-desc">NetScan Pro needs a few things to work properly on your system. We detected some missing components.</div>
+    <div id="dep-list"></div>
+    <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px">
+      <button class="btn primary" style="width:100%;padding:12px" id="fix-btn" onclick="fixDependencies()">Fix Automatically 🔧</button>
+      <button class="btn" style="width:100%;padding:12px" onclick="checkSystemStatus()">Re-check System ↻</button>
+    </div>
+  </div>
+</div>
+
 <div class="app" id="app">
+<!-- ... rest of app ... -->
   <div class="topbar">
     <div>
       <div class="topbar-title">NetScan Pro</div>
@@ -601,6 +625,65 @@ function drawSpeedChart(){
   ctx.fillStyle='#639922';ctx.fillText('↑ Upload',pad+80,pad+10);
 }
 
+async function checkSystemStatus(){
+  try {
+    const status = await invoke('check_system');
+    const list = document.getElementById('dep-list');
+    const overlay = document.getElementById('setup-overlay');
+    
+    let missing = [];
+    let html = '';
+    
+    // Check Nmap
+    html += `
+      <div class="dep-item">
+        <div class="dep-name">Nmap Scanner</div>
+        <div class="dep-status ${status.nmap_installed ? 'badge-green' : 'badge-red'}">
+          ${status.nmap_installed ? 'Installed' : 'Missing'}
+        </div>
+      </div>
+    `;
+    if(!status.nmap_installed) missing.push('nmap');
+    
+    // Check Permissions (only warning if not admin, nmap can still run but limited)
+    html += `
+      <div class="dep-item">
+        <div class="dep-name">Root Permissions</div>
+        <div class="dep-status ${status.is_admin ? 'badge-green' : 'badge-amber'}">
+          ${status.is_admin ? 'Active' : 'Missing'}
+        </div>
+      </div>
+    `;
+    
+    list.innerHTML = html;
+    
+    if(missing.length === 0){
+      overlay.style.display = 'none';
+    } else {
+      overlay.style.display = 'flex';
+    }
+  } catch (error) {
+    console.error('System check failed:', error);
+  }
+}
+
+async function fixDependencies(){
+  const btn = document.getElementById('fix-btn');
+  btn.disabled = true;
+  btn.textContent = 'Fixing...';
+  
+  try {
+    await invoke('fix_dependency', { dependency: 'nmap' });
+    await checkSystemStatus();
+  } catch (error) {
+    alert('Failed to fix: ' + error);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Fix Automatically 🔧';
+  }
+}
+
+checkSystemStatus();
 renderDevices();
 renderAlerts('all');
 </script>
