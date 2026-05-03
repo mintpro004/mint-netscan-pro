@@ -8,56 +8,36 @@ A high-performance, cross-platform network scanner built with Tauri and Nmap. An
 - **Modern UI:** Responsive and intuitive dashboard for network monitoring.
 - **Vulnerability Scanning:** Detects potential security risks on your network.
 
-## Installation
+## Installation Methods
 
-### 🐧 Linux (Debian, Ubuntu, etc.)
-1.  **Install Nmap:**
+### Option 1: Pre-built Installers (Easiest)
+Download the installer for your platform from the [Releases](https://github.com/mintpro004/mint-netscan-pro/releases) page.
+
+### Option 2: Installation from Source (Git Clone)
+Use this method if you want to build the app manually or contribute to development.
+
+#### 1. Prerequisites
+Ensure you have the following installed:
+*   **Git:** `sudo apt install git`
+*   **Nmap:** `sudo apt install nmap`
+*   **Node.js (v20+):** [Installation Guide](https://nodejs.org/)
+*   **Rust:** `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+*   **Linux Dependencies:**
     ```bash
-    sudo apt update && sudo apt install nmap -y
-    ```
-2.  **Download the App:** Go to the [Releases](https://github.com/mintpro004/mint-netscan-pro/releases) page and download the `.deb` file.
-3.  **Install:**
-    ```bash
-    sudo dpkg -i netscan-pro_*.deb
-    sudo apt install -f  # Fix any missing dependencies
+    sudo apt update
+    sudo apt install libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
     ```
 
-### 💻 ChromeOS (Chromebooks)
-*Note: Requires the Linux development environment (Crostini) to be enabled in Settings.*
-1.  **Open Terminal** in your Chromebook.
-2.  **Install Nmap:**
-    ```bash
-    sudo apt update && sudo apt install nmap -y
-    ```
-3.  **Download the App:** Download the Linux `.deb` file from the Releases page and move it to the "Linux files" folder in your Files app.
-4.  **Install:**
-    ```bash
-    sudo dpkg -i netscan-pro_*.deb
-    sudo apt install -f
-    ```
-5.  **Launch:** The app will appear in your "Linux apps" folder in the ChromeOS Launcher.
+#### 2. Clone the Repository
+```bash
+git clone https://github.com/mintpro004/mint-netscan-pro.git
+cd mint-netscan-pro
+```
 
-### 🪟 Windows
-1.  **Install Nmap:** Download and run the [Nmap Windows Installer](https://nmap.org/download.html#windows).
-2.  **Download the App:** Download the `.msi` or `.exe` installer from the Releases page.
-3.  **Run Installer:** Double-click the downloaded file and follow the prompts.
-
-### 🍎 macOS
-1.  **Install Nmap:** (Requires [Homebrew](https://brew.sh/))
-    ```bash
-    brew install nmap
-    ```
-2.  **Download the App:** Download the `.dmg` from the Releases page.
-3.  **Install:** Open the `.dmg` and drag "NetScan Pro" to your Applications folder.
-
-### 📱 Mobile (Android/iOS)
-Mobile builds are currently available via the source code. To generate a mobile package:
-1.  Follow the [Tauri Mobile Guide](https://v2.tauri.app/start/mobile/).
-2.  Run `npm run tauri android init` or `npm run tauri ios init`.
-3.  Build the package using `npm run tauri android build`.
-
-## Development
-1. Install Rust and Node.js.
-2. Clone the repo.
-3. Run `npm install`.
-4. Run `npm run tauri dev`.
+#### 3. Install & Run
+```bash
+npm install
+npm run tauri dev  # Run in development mode
+# OR
+npm run tauri build # Create a production installer
+```
