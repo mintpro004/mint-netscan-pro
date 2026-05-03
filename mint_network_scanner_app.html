@@ -1,0 +1,594 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);background:transparent}
+.app{display:flex;flex-direction:column;min-height:600px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary)}
+.topbar-title{font-size:15px;font-weight:500;color:var(--color-text-primary)}
+.topbar-sub{font-size:11px;color:var(--color-text-secondary);margin-top:1px}
+.badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500}
+.badge-green{background:#EAF3DE;color:#3B6D11}
+.badge-amber{background:#FAEEDA;color:#854F0B}
+.badge-red{background:#FCEBEB;color:#A32D2D}
+.badge-blue{background:#E6F1FB;color:#185FA5}
+.tabs{display:flex;gap:0;border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);overflow-x:auto}
+.tab{padding:8px 14px;font-size:12px;font-weight:500;color:var(--color-text-secondary);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s}
+.tab.active{color:var(--color-text-info);border-bottom-color:#185FA5}
+.tab:hover{color:var(--color-text-primary)}
+.pane{display:none;flex:1;overflow:auto}
+.pane.active{display:block}
+.toolbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.btn{padding:6px 12px;font-size:12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer;font-weight:500;transition:background 0.12s}
+.btn:hover{background:var(--color-background-secondary)}
+.btn.primary{background:#185FA5;color:#E6F1FB;border-color:#185FA5}
+.btn.primary:hover{background:#0C447C}
+.btn.danger{background:#A32D2D;color:#FCEBEB;border-color:#A32D2D}
+.search{flex:1;padding:6px 10px;font-size:12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);outline:none}
+.search:focus{border-color:#185FA5}
+.device-grid{padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.device-row{display:grid;grid-template-columns:32px 1fr 110px 110px 90px 80px;align-items:center;gap:10px;padding:8px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);cursor:pointer;transition:background 0.1s}
+.device-row:hover{background:var(--color-background-secondary)}
+.device-row.selected{border-color:#185FA5;background:#E6F1FB}
+.dev-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.dev-name{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.dev-vendor{font-size:11px;color:var(--color-text-secondary);margin-top:1px}
+.dev-ip{font-size:12px;color:var(--color-text-secondary);font-family:var(--font-mono)}
+.dev-mac{font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-mono)}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
+.dot-green{background:#639922}
+.dot-amber{background:#BA7517}
+.dot-red{background:#E24B4A}
+.col-hdr{display:grid;grid-template-columns:32px 1fr 110px 110px 90px 80px;gap:10px;padding:6px 10px;font-size:10px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:0.5px solid var(--color-border-tertiary);margin:0 14px}
+.detail-panel{padding:16px;display:flex;flex-direction:column;gap:14px}
+.detail-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px}
+.detail-card h3{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:0.5px solid var(--color-border-tertiary);gap:12px}
+.detail-row:last-child{border:none}
+.detail-label{font-size:12px;color:var(--color-text-secondary)}
+.detail-val{font-size:12px;font-weight:500;color:var(--color-text-primary);font-family:var(--font-mono);text-align:right}
+.port-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.port-pill{padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.port-open{background:#EAF3DE;color:#3B6D11}
+.port-filtered{background:#FAEEDA;color:#854F0B}
+.section-title{font-size:13px;font-weight:500;color:var(--color-text-primary);padding:10px 14px 4px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 14px}
+.stat-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;text-align:center}
+.stat-num{font-size:22px;font-weight:500;color:var(--color-text-primary)}
+.stat-label{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+.vuln-row{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin:0 14px 6px}
+.vuln-sev{padding:2px 7px;border-radius:20px;font-size:10px;font-weight:500;white-space:nowrap;margin-top:2px}
+.sev-high{background:#FCEBEB;color:#A32D2D}
+.sev-med{background:#FAEEDA;color:#854F0B}
+.sev-low{background:#EAF3DE;color:#3B6D11}
+.vuln-title{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.vuln-desc{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+.event-row{display:flex;align-items:flex-start;gap:10px;padding:7px 14px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.event-time{font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-mono);min-width:60px}
+.event-msg{font-size:12px;color:var(--color-text-primary)}
+.event-sub{font-size:11px;color:var(--color-text-secondary)}
+.progress-bar{height:4px;background:var(--color-border-tertiary);border-radius:2px;overflow:hidden;margin:8px 14px 0}
+.progress-fill{height:100%;background:#185FA5;border-radius:2px;width:0%;transition:width 0.3s}
+.scanning-msg{font-size:12px;color:var(--color-text-secondary);padding:4px 14px 8px;font-family:var(--font-mono)}
+.speed-chart{padding:10px 14px}
+.speed-canvas{width:100%;height:80px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);position:relative;overflow:hidden}
+.map-area{padding:10px 14px}
+.network-map{background:var(--color-background-secondary);border-radius:var(--border-radius-md);position:relative;height:240px;overflow:hidden}
+.map-node{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+.map-node-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid transparent}
+.map-node-label{font-size:10px;color:var(--color-text-secondary);text-align:center;max-width:56px}
+.map-node.router .map-node-icon{background:#E6F1FB;border-color:#185FA5}
+.map-node.device .map-node-icon{background:var(--color-background-primary);border-color:var(--color-border-secondary)}
+.map-line{position:absolute;background:var(--color-border-tertiary);pointer-events:none}
+.wifi-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin:0 14px 6px}
+.wifi-strength{display:flex;align-items:flex-end;gap:2px;height:16px}
+.wifi-bar{width:4px;border-radius:1px;background:var(--color-border-tertiary)}
+.wifi-bar.lit{background:#639922}
+.empty-state{text-align:center;padding:40px;color:var(--color-text-secondary);font-size:13px}
+</style>
+
+<h2 class="sr-only">Fing-style network scanner app with device discovery, port scanning, vulnerability detection, and network monitoring</h2>
+
+<div class="app" id="app">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">NetScan Pro</div>
+      <div class="topbar-sub" id="net-info">192.168.1.0/24 — Home Network</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="badge badge-green" id="scan-badge">● Live</span>
+      <span style="font-size:12px;color:var(--color-text-secondary)" id="dev-count">14 devices</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('devices')">Devices</button>
+    <button class="tab" onclick="switchTab('map')">Network map</button>
+    <button class="tab" onclick="switchTab('ports')">Port scanner</button>
+    <button class="tab" onclick="switchTab('vulns')">Vulnerabilities</button>
+    <button class="tab" onclick="switchTab('speed')">Speed test</button>
+    <button class="tab" onclick="switchTab('alerts')">Alerts</button>
+    <button class="tab" onclick="switchTab('wifi')">Wi-Fi</button>
+  </div>
+
+  <!-- DEVICES TAB -->
+  <div class="pane active" id="pane-devices">
+    <div class="toolbar">
+      <button class="btn primary" onclick="startScan()">Scan network ↗</button>
+      <input class="search" type="text" placeholder="Filter by name, IP, vendor…" oninput="filterDevices(this.value)" id="search-box">
+      <select class="btn" id="sort-sel" onchange="sortDevices(this.value)" style="padding:6px 8px">
+        <option value="ip">Sort: IP</option>
+        <option value="name">Sort: Name</option>
+        <option value="status">Sort: Status</option>
+        <option value="vendor">Sort: Vendor</option>
+      </select>
+    </div>
+    <div id="scan-progress" style="display:none">
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+      <div class="scanning-msg" id="scan-msg">Scanning 192.168.1.1…</div>
+    </div>
+    <div class="col-hdr">
+      <div></div><div>Device</div><div>IP address</div><div>MAC address</div><div>Latency</div><div>Status</div>
+    </div>
+    <div class="device-grid" id="device-grid"></div>
+
+    <div class="detail-panel" id="detail-panel" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:14px;font-weight:500" id="detail-name"></div>
+        <button class="btn" onclick="closeDetail()">Close</button>
+      </div>
+      <div class="detail-card">
+        <h3>Network info</h3>
+        <div id="detail-net"></div>
+      </div>
+      <div class="detail-card">
+        <h3>Device info</h3>
+        <div id="detail-dev"></div>
+      </div>
+      <div class="detail-card">
+        <h3>Open ports</h3>
+        <div id="detail-ports"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP TAB -->
+  <div class="pane" id="pane-map">
+    <div class="section-title">Network topology</div>
+    <div class="map-area">
+      <div class="network-map" id="net-map"></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-num">14</div><div class="stat-label">Total devices</div></div>
+      <div class="stat-card"><div class="stat-num">11</div><div class="stat-label">Online</div></div>
+      <div class="stat-card"><div class="stat-num">3</div><div class="stat-label">Offline</div></div>
+      <div class="stat-card"><div class="stat-num">6</div><div class="stat-label">Open ports</div></div>
+    </div>
+  </div>
+
+  <!-- PORT SCANNER TAB -->
+  <div class="pane" id="pane-ports">
+    <div class="toolbar">
+      <input class="search" type="text" placeholder="Target IP (e.g. 192.168.1.1)" id="port-target" value="192.168.1.1" style="max-width:180px">
+      <select class="btn" id="port-range" style="padding:6px 8px">
+        <option value="common">Common ports</option>
+        <option value="top100">Top 100</option>
+        <option value="top1000">Top 1000</option>
+        <option value="full">Full scan (1-65535)</option>
+      </select>
+      <button class="btn primary" onclick="runPortScan()">Scan ports ↗</button>
+    </div>
+    <div id="port-progress" style="display:none">
+      <div class="progress-bar"><div class="progress-fill" id="port-prog"></div></div>
+      <div class="scanning-msg" id="port-msg">Scanning port 22…</div>
+    </div>
+    <div id="port-results">
+      <div class="col-hdr" style="grid-template-columns:70px 70px 1fr 80px 1fr;margin:0 14px">
+        <div>Port</div><div>Protocol</div><div>Service</div><div>State</div><div>Banner</div>
+      </div>
+      <div id="port-list" style="padding:0 14px;display:flex;flex-direction:column;gap:5px;margin-top:6px"></div>
+    </div>
+  </div>
+
+  <!-- VULNERABILITIES TAB -->
+  <div class="pane" id="pane-vulns">
+    <div class="toolbar">
+      <button class="btn primary" onclick="runVulnScan()">Run vulnerability scan ↗</button>
+      <span style="font-size:12px;color:var(--color-text-secondary)">CVE database updated 2 hrs ago</span>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-num" style="color:#E24B4A" id="v-high">3</div><div class="stat-label">High severity</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#BA7517" id="v-med">7</div><div class="stat-label">Medium</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#639922" id="v-low">12</div><div class="stat-label">Low</div></div>
+      <div class="stat-card"><div class="stat-num" id="v-total">22</div><div class="stat-label">Total findings</div></div>
+    </div>
+    <div class="section-title" style="margin-top:6px">Findings</div>
+    <div id="vuln-list" style="padding:10px 0;display:flex;flex-direction:column;gap:6px"></div>
+  </div>
+
+  <!-- SPEED TEST TAB -->
+  <div class="pane" id="pane-speed">
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-num" id="dl-speed">—</div><div class="stat-label">Download Mbps</div></div>
+      <div class="stat-card"><div class="stat-num" id="ul-speed">—</div><div class="stat-label">Upload Mbps</div></div>
+      <div class="stat-card"><div class="stat-num" id="ping-val">—</div><div class="stat-label">Ping ms</div></div>
+      <div class="stat-card"><div class="stat-num" id="jitter-val">—</div><div class="stat-label">Jitter ms</div></div>
+    </div>
+    <div style="text-align:center;padding:16px">
+      <button class="btn primary" onclick="runSpeedTest()" id="speed-btn" style="padding:10px 28px;font-size:14px">Start speed test ↗</button>
+    </div>
+    <div class="section-title">Throughput history</div>
+    <div class="speed-chart">
+      <canvas id="speed-canvas" width="640" height="90"></canvas>
+    </div>
+    <div class="section-title" style="margin-top:10px">ISP & connection</div>
+    <div style="padding:10px 14px">
+      <div class="detail-card">
+        <div class="detail-row"><span class="detail-label">ISP</span><span class="detail-val">Vodacom SA</span></div>
+        <div class="detail-row"><span class="detail-label">Public IP</span><span class="detail-val">41.x.x.x</span></div>
+        <div class="detail-row"><span class="detail-label">Connection type</span><span class="detail-val">Fibre</span></div>
+        <div class="detail-row"><span class="detail-label">DNS servers</span><span class="detail-val">1.1.1.1, 8.8.8.8</span></div>
+        <div class="detail-row"><span class="detail-label">IPv6</span><span class="detail-val" id="ipv6-check">Enabled</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTS TAB -->
+  <div class="pane" id="pane-alerts">
+    <div class="toolbar">
+      <button class="btn" onclick="clearAlerts()">Clear all</button>
+      <select class="btn" id="alert-filter" onchange="filterAlerts(this.value)" style="padding:6px 8px">
+        <option value="all">All alerts</option>
+        <option value="new">New devices</option>
+        <option value="offline">Went offline</option>
+        <option value="security">Security</option>
+      </select>
+    </div>
+    <div id="alert-list"></div>
+  </div>
+
+  <!-- WIFI TAB -->
+  <div class="pane" id="pane-wifi">
+    <div class="toolbar">
+      <button class="btn primary" onclick="scanWifi()">Scan Wi-Fi ↗</button>
+      <span style="font-size:12px;color:var(--color-text-secondary)">2.4GHz &amp; 5GHz bands</span>
+    </div>
+    <div class="section-title">Detected networks</div>
+    <div id="wifi-list" style="padding:10px 0;display:flex;flex-direction:column;gap:6px"></div>
+    <div class="section-title" style="margin-top:8px">Channel usage</div>
+    <div style="padding:10px 14px">
+      <canvas id="channel-canvas" width="620" height="80"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEVICES = [
+  {id:1,name:"ASUS RT-AX88U",vendor:"ASUS",type:"router",ip:"192.168.1.1",mac:"A4:C3:F0:11:22:33",latency:1,status:"online",os:"Linux embedded",ports:[80,443,22,53,8080],uptime:"47d 3h"},
+  {id:2,name:"MacBook Pro",vendor:"Apple",type:"laptop",ip:"192.168.1.10",mac:"3C:22:FB:44:55:66",latency:3,status:"online",os:"macOS 14.4",ports:[5000,7000,22],uptime:"2d 11h"},
+  {id:3,name:"iPhone 15 Pro",vendor:"Apple",type:"phone",ip:"192.168.1.11",mac:"BE:D0:74:AB:CD:EF",latency:6,status:"online",os:"iOS 17.4",ports:[],uptime:"6h 12m"},
+  {id:4,name:"Samsung TV",vendor:"Samsung",type:"tv",ip:"192.168.1.20",mac:"F8:04:2E:12:34:56",latency:12,status:"online",os:"Tizen",ports:[8009,9197],uptime:"12d 0h"},
+  {id:5,name:"Raspberry Pi",vendor:"Raspberry Pi",type:"server",ip:"192.168.1.30",mac:"B8:27:EB:AA:BB:CC",latency:2,status:"online",os:"Debian 12",ports:[22,80,3000,5432,8080],uptime:"30d 14h"},
+  {id:6,name:"HP LaserJet",vendor:"HP",type:"printer",ip:"192.168.1.40",mac:"00:1A:4B:DD:EE:FF",latency:18,status:"online",os:"Embedded",ports:[9100,631,80],uptime:"5d 7h"},
+  {id:7,name:"Nest Hub",vendor:"Google",type:"iot",ip:"192.168.1.50",mac:"F4:F5:D8:00:11:22",latency:8,status:"online",os:"Cast OS",ports:[8008,8009],uptime:"22d 1h"},
+  {id:8,name:"Philips Hue Bridge",vendor:"Philips",type:"iot",ip:"192.168.1.51",mac:"EC:B5:FA:33:44:55",latency:4,status:"online",os:"Hue OS",ports:[80,443],uptime:"90d 0h"},
+  {id:9,name:"Xbox Series X",vendor:"Microsoft",type:"gaming",ip:"192.168.1.60",mac:"C4:9D:ED:66:77:88",latency:7,status:"offline",os:"Xbox OS",ports:[],uptime:"—"},
+  {id:10,name:"Windows PC",vendor:"Dell",type:"desktop",ip:"192.168.1.70",mac:"14:CB:19:99:AA:BB",latency:5,status:"online",os:"Windows 11",ports:[135,139,445,3389],uptime:"1d 4h"},
+  {id:11,name:"iPad Air",vendor:"Apple",type:"tablet",ip:"192.168.1.12",mac:"70:EC:E4:CC:DD:EE",latency:9,status:"online",os:"iPadOS 17.4",ports:[],uptime:"3h 40m"},
+  {id:12,name:"Synology NAS",vendor:"Synology",type:"server",ip:"192.168.1.80",mac:"00:11:32:FF:00:11",latency:3,status:"online",os:"DSM 7.2",ports:[80,443,5000,5001,22,873],uptime:"60d 2h"},
+  {id:13,name:"Unknown device",vendor:"Unknown",type:"unknown",ip:"192.168.1.99",mac:"B2:45:7A:X0:Y1:Z2",latency:22,status:"online",os:"Unknown",ports:[80],uptime:"0h 15m"},
+  {id:14,name:"Amazon Echo",vendor:"Amazon",type:"iot",ip:"192.168.1.52",mac:"FC:A1:83:22:33:44",latency:10,status:"offline",os:"Fire OS",ports:[],uptime:"—"},
+];
+
+const ICONS = {router:"🌐",laptop:"💻",phone:"📱",tv:"📺",server:"🖥️",printer:"🖨️",iot:"💡",gaming:"🎮",desktop:"🖥️",tablet:"📱",unknown:"❓"};
+
+const VULNS = [
+  {sev:"high",title:"Telnet enabled on router",desc:"Router 192.168.1.1 has Telnet (port 23) exposed — plaintext protocol, replace with SSH.",cve:"CVE-2024-1234"},
+  {sev:"high",title:"Default credentials detected",desc:"Unknown device 192.168.1.99 responding to admin/admin credentials on port 80.",cve:"CVE-2024-5678"},
+  {sev:"high",title:"SMB 1.0 (EternalBlue risk)",desc:"Windows PC has SMBv1 enabled — vulnerable to ransomware lateral movement.",cve:"CVE-2017-0144"},
+  {sev:"med",title:"HTTP (unencrypted) on Hue Bridge",desc:"Traffic to 192.168.1.51:80 is unencrypted. Use HTTPS on port 443.",cve:""},
+  {sev:"med",title:"RDP exposed — 192.168.1.70",desc:"Remote Desktop (3389) is accessible. Enable Network Level Authentication.",cve:"CVE-2019-0708"},
+  {sev:"med",title:"Outdated firmware on ASUS router",desc:"Current: 3.0.0.4.388. Latest: 3.0.0.4.390. Security patches available.",cve:""},
+  {sev:"med",title:"PostgreSQL port publicly accessible",desc:"Raspberry Pi port 5432 is reachable from LAN without firewall rule.",cve:""},
+  {sev:"low",title:"mDNS broadcasting on Samsung TV",desc:"Device leaks device names and model info via multicast DNS.",cve:""},
+  {sev:"low",title:"Weak Wi-Fi encryption on guest SSID",desc:"Guest network using WPA/TKIP — upgrade to WPA3 or WPA2/AES.",cve:""},
+  {sev:"low",title:"UPnP enabled on router",desc:"Universal Plug and Play can allow devices to punch holes through your firewall.",cve:""},
+];
+
+const ALERTS = [
+  {type:"new",time:"09:42",msg:"New device joined",sub:"Unknown device (192.168.1.99) — B2:45:7A:X0:Y1:Z2"},
+  {type:"offline",time:"08:15",msg:"Device went offline",sub:"Amazon Echo (192.168.1.52)"},
+  {type:"offline",time:"07:30",msg:"Device went offline",sub:"Xbox Series X (192.168.1.60)"},
+  {type:"security",time:"06:10",msg:"Vulnerability found",sub:"SMB 1.0 detected on Windows PC — CVE-2017-0144"},
+  {type:"new",time:"Yesterday",msg:"New device joined",sub:"iPad Air (192.168.1.12) — 70:EC:E4:CC:DD:EE"},
+  {type:"security",time:"Yesterday",msg:"Port scan detected",sub:"192.168.1.99 scanned 47 ports on your router"},
+  {type:"new",time:"2 days ago",msg:"Device name changed",sub:"DESKTOP-X3K → Windows PC"},
+];
+
+const WIFI_NETS = [
+  {ssid:"HomeNetwork_5G",band:"5GHz",ch:36,sig:-42,sec:"WPA3",enc:"AES",mine:true},
+  {ssid:"HomeNetwork_2.4G",band:"2.4GHz",ch:6,sig:-45,sec:"WPA2",enc:"AES",mine:true},
+  {ssid:"Neighbour_WiFi",band:"2.4GHz",ch:6,sig:-71,sec:"WPA2",enc:"AES",mine:false},
+  {ssid:"VODACOM_5g_HOME",band:"5GHz",ch:149,sig:-65,sec:"WPA2",enc:"AES",mine:false},
+  {ssid:"AndroidAP_4321",band:"2.4GHz",ch:1,sig:-80,sec:"WPA2",enc:"TKIP",mine:false},
+  {ssid:"DIRECT-TV-Samsung",band:"2.4GHz",ch:11,sig:-68,sec:"WPA2",enc:"AES",mine:false},
+];
+
+let filteredDevices = [...DEVICES];
+let selectedDevice = null;
+let scanInterval = null;
+let speedHistory = [];
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active', t.textContent.toLowerCase().replace(/ /g,'').includes(name.replace(/ /g,'')));
+  });
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  const pane = document.getElementById('pane-'+name);
+  if(pane) pane.classList.add('active');
+  if(name==='map') renderMap();
+  if(name==='ports') renderPortList(DEVICES[4].ports.map(p=>({port:p,proto:'TCP',service:svcName(p),state:'open',banner:svcBanner(p)})));
+  if(name==='vulns') renderVulns();
+  if(name==='alerts') renderAlerts('all');
+  if(name==='wifi') renderWifi();
+  if(name==='speed') drawSpeedChart();
+}
+
+function svcName(p){return {22:'SSH',80:'HTTP',443:'HTTPS',3389:'RDP',5432:'PostgreSQL',8080:'HTTP-alt',3000:'Node.js',5000:'Dev server',7000:'AirPlay',8008:'Cast',8009:'Cast TLS',9100:'Raw print',631:'IPP',135:'RPC',139:'NetBIOS',445:'SMB',873:'rsync',5001:'Synology',53:'DNS'}[p]||'Unknown'}
+function svcBanner(p){return {22:'SSH-2.0-OpenSSH_9.3',80:'nginx/1.25.3',443:'nginx/1.25.3',3389:'MSTSC',5432:'PostgreSQL 15.4',8080:'Apache Tomcat/10.1'}[p]||'—'}
+
+function statusColor(s){return s==='online'?'dot-green':s==='warning'?'dot-amber':'dot-red'}
+
+function renderDevices(){
+  const grid = document.getElementById('device-grid');
+  grid.innerHTML = filteredDevices.map(d=>`
+    <div class="device-row${selectedDevice===d.id?' selected':''}" onclick="showDetail(${d.id})">
+      <div class="dev-icon">${ICONS[d.type]||'❓'}</div>
+      <div>
+        <div class="dev-name">${d.name}</div>
+        <div class="dev-vendor">${d.vendor}</div>
+      </div>
+      <div class="dev-ip">${d.ip}</div>
+      <div class="dev-mac">${d.mac}</div>
+      <div style="font-size:12px;color:var(--color-text-secondary)">${d.status==='online'?d.latency+'ms':'—'}</div>
+      <div><span class="status-dot ${statusColor(d.status)}"></span><span style="font-size:12px">${d.status}</span></div>
+    </div>
+  `).join('');
+}
+
+function filterDevices(q){
+  const s=q.toLowerCase();
+  filteredDevices=DEVICES.filter(d=>d.name.toLowerCase().includes(s)||d.ip.includes(s)||d.vendor.toLowerCase().includes(s)||d.mac.toLowerCase().includes(s));
+  renderDevices();
+}
+
+function sortDevices(by){
+  filteredDevices.sort((a,b)=>{
+    if(by==='ip') return a.ip.split('.').reduce((acc,v,i)=>acc+(+v)*Math.pow(256,3-i),0) - b.ip.split('.').reduce((acc,v,i)=>acc+(+v)*Math.pow(256,3-i),0);
+    if(by==='name') return a.name.localeCompare(b.name);
+    if(by==='status') return a.status.localeCompare(b.status);
+    if(by==='vendor') return a.vendor.localeCompare(b.vendor);
+  });
+  renderDevices();
+}
+
+function showDetail(id){
+  selectedDevice=id;
+  const d=DEVICES.find(x=>x.id===id);
+  document.getElementById('detail-panel').style.display='flex';
+  document.getElementById('detail-name').textContent=`${ICONS[d.type]} ${d.name}`;
+  document.getElementById('detail-net').innerHTML=`
+    <div class="detail-row"><span class="detail-label">IP address</span><span class="detail-val">${d.ip}</span></div>
+    <div class="detail-row"><span class="detail-label">MAC address</span><span class="detail-val">${d.mac}</span></div>
+    <div class="detail-row"><span class="detail-label">Latency</span><span class="detail-val">${d.status==='online'?d.latency+' ms':'—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Uptime</span><span class="detail-val">${d.uptime}</span></div>
+  `;
+  document.getElementById('detail-dev').innerHTML=`
+    <div class="detail-row"><span class="detail-label">Vendor</span><span class="detail-val">${d.vendor}</span></div>
+    <div class="detail-row"><span class="detail-label">OS</span><span class="detail-val">${d.os}</span></div>
+    <div class="detail-row"><span class="detail-label">Type</span><span class="detail-val">${d.type}</span></div>
+  `;
+  document.getElementById('detail-ports').innerHTML=d.ports.length?`<div class="port-grid">${d.ports.map(p=>`<span class="port-pill port-open">${p} ${svcName(p)}</span>`).join('')}</div>`:`<span style="font-size:12px;color:var(--color-text-secondary)">No open ports detected</span>`;
+  renderDevices();
+}
+
+function closeDetail(){
+  selectedDevice=null;
+  document.getElementById('detail-panel').style.display='none';
+  renderDevices();
+}
+
+function startScan(){
+  document.getElementById('scan-progress').style.display='block';
+  let pct=0;
+  const ips=['192.168.1.1','192.168.1.10','192.168.1.20','192.168.1.30','192.168.1.40','192.168.1.50','192.168.1.99'];
+  let i=0;
+  const iv=setInterval(()=>{
+    pct+=Math.random()*8+4;
+    if(pct>100)pct=100;
+    document.getElementById('prog-fill').style.width=pct+'%';
+    document.getElementById('scan-msg').textContent=`Scanning ${ips[i%ips.length]}…`;
+    i++;
+    if(pct>=100){clearInterval(iv);setTimeout(()=>{document.getElementById('scan-progress').style.display='none';},800);}
+  },200);
+}
+
+function renderMap(){
+  const map=document.getElementById('net-map');
+  const positions=[
+    {x:47,y:45,d:DEVICES[0]},
+    {x:15,y:20,d:DEVICES[1]},{x:30,y:15,d:DEVICES[2]},{x:50,y:10,d:DEVICES[10]},
+    {x:70,y:15,d:DEVICES[3]},{x:85,y:20,d:DEVICES[9]},
+    {x:10,y:55,d:DEVICES[4]},{x:25,y:65,d:DEVICES[5]},
+    {x:65,y:60,d:DEVICES[6]},{x:80,y:55,d:DEVICES[7]},{x:90,y:65,d:DEVICES[13]},
+    {x:15,y:80,d:DEVICES[8]},{x:50,y:80,d:DEVICES[11]},{x:75,y:80,d:DEVICES[12]},
+  ];
+  const lines=positions.slice(1).map(p=>{
+    const router=positions[0];
+    return `<svg style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="${router.x}" y1="${router.y}" x2="${p.x}" y2="${p.y}" stroke="var(--color-border-secondary)" stroke-width="0.5" vector-effect="non-scaling-stroke"/></svg>`;
+  }).join('');
+  const nodes=positions.map((p,i)=>`
+    <div class="map-node ${i===0?'router':'device'}" style="left:${p.x}%;top:${p.y}%;transform:translate(-50%,-50%)" title="${p.d.ip}">
+      <div class="map-node-icon" style="${p.d.status==='offline'?'opacity:0.4':''}">${ICONS[p.d.type]}</div>
+      <div class="map-node-label">${p.d.name.split(' ')[0]}</div>
+    </div>
+  `).join('');
+  map.innerHTML=lines+nodes;
+}
+
+function runPortScan(){
+  const target=document.getElementById('port-target').value;
+  document.getElementById('port-progress').style.display='block';
+  let pct=0;
+  const iv=setInterval(()=>{
+    pct+=Math.random()*12+5;
+    if(pct>100)pct=100;
+    document.getElementById('port-prog').style.width=pct+'%';
+    document.getElementById('port-msg').textContent=`Scanning port ${Math.floor(Math.random()*1000)}…`;
+    if(pct>=100){
+      clearInterval(iv);
+      document.getElementById('port-progress').style.display='none';
+      const d=DEVICES.find(x=>x.ip===target)||DEVICES[0];
+      renderPortList(d.ports.map(p=>({port:p,proto:'TCP',service:svcName(p),state:'open',banner:svcBanner(p)})));
+    }
+  },150);
+}
+
+function renderPortList(ports){
+  const list=document.getElementById('port-list');
+  if(!list)return;
+  list.innerHTML=ports.length?ports.map(p=>`
+    <div style="display:grid;grid-template-columns:70px 70px 1fr 80px 1fr;align-items:center;gap:10px;padding:7px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);font-size:12px">
+      <span style="font-weight:500;font-family:var(--font-mono)">${p.port}</span>
+      <span style="color:var(--color-text-secondary)">${p.proto}</span>
+      <span>${p.service}</span>
+      <span class="badge badge-green">${p.state}</span>
+      <span style="color:var(--color-text-secondary);font-family:var(--font-mono);font-size:10px">${p.banner}</span>
+    </div>
+  `).join(''):'<div class="empty-state">No open ports found</div>';
+}
+
+function renderVulns(){
+  document.getElementById('vuln-list').innerHTML=VULNS.map(v=>`
+    <div class="vuln-row">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span class="vuln-title">${v.title}</span>
+          ${v.cve?`<span style="font-size:10px;color:var(--color-text-tertiary);font-family:var(--font-mono)">${v.cve}</span>`:''}
+        </div>
+        <div class="vuln-desc">${v.desc}</div>
+      </div>
+      <span class="vuln-sev sev-${v.sev}">${v.sev}</span>
+    </div>
+  `).join('');
+}
+
+function runVulnScan(){
+  sendPrompt("Explain the most critical vulnerability found: SMB 1.0 EternalBlue risk on Windows PC (CVE-2017-0144) and how to fix it");
+}
+
+function renderAlerts(filter){
+  const list=document.getElementById('alert-list');
+  const items=filter==='all'?ALERTS:ALERTS.filter(a=>a.type===filter);
+  list.innerHTML=items.length?items.map(a=>`
+    <div class="event-row">
+      <div style="min-width:24px;font-size:16px">${{new:'🔵',offline:'🔴',security:'⚠️'}[a.type]||'⚪'}</div>
+      <div style="flex:1">
+        <div class="event-msg">${a.msg}</div>
+        <div class="event-sub">${a.sub}</div>
+      </div>
+      <div class="event-time">${a.time}</div>
+    </div>
+  `).join(''):'<div class="empty-state">No alerts</div>';
+}
+
+function filterAlerts(v){renderAlerts(v);}
+function clearAlerts(){document.getElementById('alert-list').innerHTML='<div class="empty-state">All alerts cleared</div>';}
+
+function sigBars(dbm){
+  const pct=Math.max(0,Math.min(100,2*(dbm+100)));
+  const bars=Math.round(pct/25);
+  return `<div class="wifi-strength">${[1,2,3,4].map(i=>`<div class="wifi-bar ${i<=bars?'lit':''}" style="height:${i*4}px"></div>`).join('')}</div>`;
+}
+
+function renderWifi(){
+  document.getElementById('wifi-list').innerHTML=WIFI_NETS.map(n=>`
+    <div class="wifi-row">
+      ${sigBars(n.sig)}
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500;color:var(--color-text-primary)">${n.ssid}${n.mine?' <span class="badge badge-blue" style="font-size:10px">mine</span>':''}</div>
+        <div style="font-size:11px;color:var(--color-text-secondary)">${n.band} · Ch ${n.ch} · ${n.sec}/${n.enc}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;font-weight:500">${n.sig} dBm</div>
+      </div>
+    </div>
+  `).join('');
+  drawChannelChart();
+}
+
+function drawChannelChart(){
+  const c=document.getElementById('channel-canvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.fillStyle='#378ADD22';
+  const nets24=WIFI_NETS.filter(n=>n.band==='2.4GHz');
+  nets24.forEach(n=>{
+    const x=(n.ch/14)*c.width;
+    ctx.fillRect(x-20,10,40,c.height-20);
+    ctx.fillStyle='#185FA5';
+    ctx.font='10px monospace';
+    ctx.fillText(n.ssid.substring(0,8),x-18,c.height-4);
+    ctx.fillStyle='#378ADD22';
+  });
+}
+
+function runSpeedTest(){
+  const btn=document.getElementById('speed-btn');
+  btn.disabled=true;btn.textContent='Testing…';
+  speedHistory=[];
+  let dl=0,ul=0,ping=0,jitter=0,t=0;
+  const iv=setInterval(()=>{
+    t++;
+    dl=Math.round(40+Math.random()*60);
+    ul=Math.round(15+Math.random()*30);
+    ping=Math.round(8+Math.random()*12);
+    jitter=Math.round(1+Math.random()*4);
+    speedHistory.push({dl,ul,t});
+    document.getElementById('dl-speed').textContent=dl;
+    document.getElementById('ul-speed').textContent=ul;
+    document.getElementById('ping-val').textContent=ping;
+    document.getElementById('jitter-val').textContent=jitter;
+    drawSpeedChart();
+    if(t>=20){clearInterval(iv);btn.disabled=false;btn.textContent='Run again ↗';}
+  },200);
+}
+
+function drawSpeedChart(){
+  const c=document.getElementById('speed-canvas');
+  if(!c||!speedHistory.length)return;
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  const w=c.width,h=c.height,pad=10;
+  const max=120;
+  ctx.strokeStyle='#185FA5';ctx.lineWidth=2;ctx.beginPath();
+  speedHistory.forEach((p,i)=>{
+    const x=pad+(i/(speedHistory.length-1||1))*(w-2*pad);
+    const y=h-pad-(p.dl/max)*(h-2*pad);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  ctx.strokeStyle='#639922';ctx.lineWidth=1.5;ctx.beginPath();
+  speedHistory.forEach((p,i)=>{
+    const x=pad+(i/(speedHistory.length-1||1))*(w-2*pad);
+    const y=h-pad-(p.ul/max)*(h-2*pad);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  ctx.fillStyle='#185FA5';ctx.font='11px monospace';ctx.fillText('↓ Download',pad,pad+10);
+  ctx.fillStyle='#639922';ctx.fillText('↑ Upload',pad+80,pad+10);
+}
+
+renderDevices();
+renderAlerts('all');
+</script>

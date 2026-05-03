@@ -1,0 +1,14 @@
+{
+  "name": "netscan-pro",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  }
+}
