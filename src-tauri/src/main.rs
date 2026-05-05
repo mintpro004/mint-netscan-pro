@@ -4,31 +4,12 @@
 use serde::{Deserialize, Serialize};
 use std::process::Command;
 use tauri::command;
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Device {
-    id: u32,
-    name: String,
-    vendor: String,
-    #[serde(rename = "type")]
-    device_type: String,
-    ip: String,
-    mac: String,
-    latency: u32,
-    status: String,
-    os: String,
-    ports: Vec<u16>,
-    uptime: String,
-}
+use netscan_pro_lib::{Device, parse_nmap_xml};
 
 #[command]
 async fn run_nmap_scan(target: String) -> Result<Vec<Device>, String> {
-    // Basic ping scan to discover hosts
-    // In a real app, we'd use -oX to get XML and parse it properly
-    // For this initial implementation, we'll simulate the parsing of a real nmap command
-    
     let output = Command::new("nmap")
-        .args(["-sn", &target])
+        .args(["-sn", "-oX", "-", &target])
         .output()
         .map_err(|e| format!("Failed to execute nmap: {}", e))?;
 
@@ -36,41 +17,16 @@ async fn run_nmap_scan(target: String) -> Result<Vec<Device>, String> {
         return Err(String::from_utf8_lossy(&output.stderr).to_string());
     }
 
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let mut devices = Vec::new();
-    let mut current_id = 1;
-
-    // Simple parsing logic for demonstration of 'real' data flow
-    // A robust XML parser would be better for production
-    for line in stdout.lines() {
-        if line.contains("Nmap scan report for") {
-            let parts: Vec<&str> = line.split_whitespace().collect();
-            let ip = parts.last().unwrap_or(&"").trim_matches('(').trim_matches(')').to_string();
-            
-            devices.push(Device {
-                id: current_id,
-                name: if parts.len() > 5 { parts[4].to_string() } else { format!("Device {}", current_id) },
-                vendor: "Unknown".to_string(),
-                device_type: "unknown".to_string(),
-                ip,
-                mac: "00:00:00:00:00:00".to_string(),
-                latency: 1,
-                status: "online".to_string(),
-                os: "Unknown".to_string(),
-                ports: Vec::new(),
-                uptime: "Unknown".to_string(),
-            });
-            current_id += 1;
-        }
-    }
-
-    Ok(devices)
+    let xml_data = String::from_utf8_lossy(&output.stdout);
+    parse_nmap_xml(&xml_data)
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 struct SystemStatus {
     nmap_installed: bool,
     nmap_version: String,
+    rust_installed: bool,
+    rust_version: String,
     is_admin: bool,
     os: String,
 }
@@ -96,8 +52,22 @@ async fn check_system() -> Result<SystemStatus, String> {
         Err(_) => (false, "Not Found".to_string()),
     };
 
+    // Check if rust is installed
+    let rust_check = Command::new("rustc")
+        .arg("--version")
+        .output();
+
+    let (rust_installed, rust_version) = match rust_check {
+        Ok(output) => {
+            let version = String::from_utf8_lossy(&output.stdout)
+                .trim()
+                .to_string();
+            (true, version)
+        },
+        Err(_) => (false, "Not Found".to_string()),
+    };
+
     // Check for admin/root permissions
-    // On Linux/macOS, check if UID is 0. On Windows, this is more complex but we'll use a simple check for now.
     #[cfg(not(windows))]
     let is_admin = unsafe { libc::getuid() == 0 };
     #[cfg(windows)]
@@ -106,6 +76,8 @@ async fn check_system() -> Result<SystemStatus, String> {
     Ok(SystemStatus {
         nmap_installed,
         nmap_version,
+        rust_installed,
+        rust_version,
         is_admin,
         os,
     })
@@ -118,7 +90,6 @@ async fn fix_dependency(handle: tauri::AppHandle, dependency: String) -> Result<
     match dependency.as_str() {
         "nmap" => {
             if os == "linux" {
-                // Try to install using pkexec for GUI sudo
                 let status = Command::new("pkexec")
                     .args(["apt-get", "install", "-y", "nmap"])
                     .status()
@@ -130,7 +101,6 @@ async fn fix_dependency(handle: tauri::AppHandle, dependency: String) -> Result<
                     Err("Installation failed or cancelled".to_string())
                 }
             } else if os == "windows" {
-                // Try to use winget on Windows
                 let status = Command::new("winget")
                     .args(["install", "Insecure.Nmap"])
                     .status()
@@ -140,6 +110,23 @@ async fn fix_dependency(handle: tauri::AppHandle, dependency: String) -> Result<
                     Ok("Nmap installed via winget".to_string())
                 } else {
                     Err("Winget installation failed".to_string())
+                }
+            } else {
+                Err(format!("Auto-fix not supported for OS: {}", os))
+            }
+        },
+        "rust" => {
+            if os == "linux" || os == "macos" {
+                let status = Command::new("sh")
+                    .arg("-c")
+                    .arg("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y")
+                    .status()
+                    .map_err(|e| format!("Failed to run rustup installer: {}", e))?;
+                
+                if status.success() {
+                    Ok("Rust installed successfully. Please restart the app to update PATH.".to_string())
+                } else {
+                    Err("Rust installation failed".to_string())
                 }
             } else {
                 Err(format!("Auto-fix not supported for OS: {}", os))

@@ -286,7 +286,7 @@ body{font-family:var(--font-sans);background:transparent}
 </div>
 
 <script>
-const DEVICES = [
+let DEVICES = [
   {id:1,name:"ASUS RT-AX88U",vendor:"ASUS",type:"router",ip:"192.168.1.1",mac:"A4:C3:F0:11:22:33",latency:1,status:"online",os:"Linux embedded",ports:[80,443,22,53,8080],uptime:"47d 3h"},
   {id:2,name:"MacBook Pro",vendor:"Apple",type:"laptop",ip:"192.168.1.10",mac:"3C:22:FB:44:55:66",latency:3,status:"online",os:"macOS 14.4",ports:[5000,7000,22],uptime:"2d 11h"},
   {id:3,name:"iPhone 15 Pro",vendor:"Apple",type:"phone",ip:"192.168.1.11",mac:"BE:D0:74:AB:CD:EF",latency:6,status:"online",os:"iOS 17.4",ports:[],uptime:"6h 12m"},
@@ -339,8 +339,7 @@ const WIFI_NETS = [
 
 const { invoke } = window.__TAURI__.core;
 
-let DEVICES = [];
-let filteredDevices = [];
+let filteredDevices = [...DEVICES];
 let selectedDevice = null;
 let scanInterval = null;
 let speedHistory = [];
@@ -644,8 +643,19 @@ async function checkSystemStatus(){
       </div>
     `;
     if(!status.nmap_installed) missing.push('nmap');
+
+    // Check Rust
+    html += `
+      <div class="dep-item">
+        <div class="dep-name">Rust Toolchain</div>
+        <div class="dep-status ${status.rust_installed ? 'badge-green' : 'badge-red'}">
+          ${status.rust_installed ? 'Installed' : 'Missing'}
+        </div>
+      </div>
+    `;
+    if(!status.rust_installed) missing.push('rust');
     
-    // Check Permissions (only warning if not admin, nmap can still run but limited)
+    // Check Permissions
     html += `
       <div class="dep-item">
         <div class="dep-name">Root Permissions</div>
@@ -661,6 +671,7 @@ async function checkSystemStatus(){
       overlay.style.display = 'none';
     } else {
       overlay.style.display = 'flex';
+      window.missingDeps = missing;
     }
   } catch (error) {
     console.error('System check failed:', error);
@@ -673,7 +684,11 @@ async function fixDependencies(){
   btn.textContent = 'Fixing...';
   
   try {
-    await invoke('fix_dependency', { dependency: 'nmap' });
+    const deps = window.missingDeps || [];
+    for (const dep of deps) {
+      btn.textContent = `Installing ${dep}...`;
+      await invoke('fix_dependency', { dependency: dep });
+    }
     await checkSystemStatus();
   } catch (error) {
     alert('Failed to fix: ' + error);
